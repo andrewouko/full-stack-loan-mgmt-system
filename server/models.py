@@ -17,10 +17,16 @@ class Loan:
 @strawberry.input
 @dataclass
 class LoanFilter:
-    name: Optional[str]
-    interest_rate: Optional[float]
-    principal: Optional[float]
-    due_date: Optional[datetime.date]
+    name: Optional[str] = None
+    interest_rate: Optional[float] = None
+    principal: Optional[float] = None
+    due_date: Optional[datetime.date] = None
+
+
+@dataclass
+class LoanPaymentInput:
+    loan_id: int
+    amount: float
 
 
 @strawberry.type
@@ -30,3 +36,13 @@ class LoanPayment:
     loan_id: int
     payment_date: datetime.date
     amount: float
+    status: Optional[str] = None
+    
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "id": self.id,
+            "loan_id": self.loan_id,
+            "payment_date": self.payment_date,
+            "amount": self.amount,
+            "status": self.status,
+        }

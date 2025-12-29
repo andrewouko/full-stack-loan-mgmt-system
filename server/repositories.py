@@ -30,7 +30,7 @@ class Repository(Generic[T]):
         pass
 
     @abstractmethod
-    def get_by_id(self, item_id: int) -> T | None:
+    def get_by_id(self, item_id: int) -> Optional[T]:
         pass
 
 
@@ -58,9 +58,9 @@ class InMemoryRepository(Repository[T]):
                     start_index = index + 1
                     break
 
-        return filtered_items[start_index:start_index + (limit if limit is not None else 1)]
+        return filtered_items[start_index:start_index + (limit if limit is not None else 10)]
 
-    def get_by_id(self, item_id: int) -> T | None:
+    def get_by_id(self, item_id: int) -> Optional[T]:
         for item in self._items:
             if item.id == item_id:
                 return item
