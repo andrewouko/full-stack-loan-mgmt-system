@@ -81,4 +81,5 @@ class TestGraphQLRoute:
         assert isinstance(payments, list)
         assert len(payments) >= 1
         print(f"Payments retrieved: {payments}")
-        assert all(payment["loanId"] == existing_loan.id for payment in payments)
+        assert all(payment["loanId"] ==
+                   existing_loan.id for payment in payments)
