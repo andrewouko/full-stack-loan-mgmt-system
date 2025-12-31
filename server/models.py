@@ -1,8 +1,14 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Literal, Optional
 import strawberry
 import datetime
 
+DataStoreType = Literal["in_memory", "database"]
+@dataclass
+class Config:
+    datastore_type: DataStoreType = "in_memory"  # or "database"
+    database_url: Optional[str] = None
+    
 
 @strawberry.type
 @dataclass

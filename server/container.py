@@ -1,7 +1,7 @@
 from typing import Optional
 
-from models import Loan, LoanPayment
-from repositories import InMemoryRepository, Repository
+from models import Config, Loan, LoanPayment
+from datastore import InMemoryDataStore, DataStore
 from seed import loans, loan_payments
 from services import LoanService
 
@@ -9,52 +9,53 @@ from services import LoanService
 class Container:
     """
     Simple DI container.
-    - Production: uses seed data with InMemoryRepository (we can swap for DB later).
+    - Production: use init() to set up singletons.
     - Testing: call override() to inject test doubles.
     """
 
-    _loan_repo: Optional[Repository[Loan]] = None
-    _payment_repo: Optional[Repository[LoanPayment]] = None
+    _loan_datastore: Optional[DataStore[Loan]] = None
+    _payment_datastore: Optional[DataStore[LoanPayment]] = None
     _loan_service: Optional[LoanService] = None
 
     @classmethod
-    def loan_repo(cls) -> Repository[Loan]:
-        if cls._loan_repo is None:
-            cls._loan_repo = InMemoryRepository[Loan](
-                initial_items=list(loans))
-        return cls._loan_repo
+    def reset(cls) -> None:
+        cls._loan_datastore = None
+        cls._payment_datastore = None
+        cls._loan_service = None
 
     @classmethod
-    def payment_repo(cls) -> Repository[LoanPayment]:
-        if cls._payment_repo is None:
-            cls._payment_repo = InMemoryRepository[LoanPayment](
+    def init(cls, config: Config) -> None:
+        cls.reset()
+        if config.datastore_type == "in_memory":
+            cls._loan_datastore = InMemoryDataStore[Loan](
+                initial_items=list(loans))
+            cls._payment_datastore = InMemoryDataStore[LoanPayment](
                 initial_items=list(loan_payments)
             )
-        return cls._payment_repo
 
     @classmethod
     def loan_service(cls) -> LoanService:
         if cls._loan_service is None:
-            cls._loan_service = LoanService(
-                loan_data=cls.loan_repo(),
-                loan_payment_data=cls.payment_repo(),
-            )
-        return cls._loan_service
+            if cls._loan_datastore is None or cls._payment_datastore is None:
+                raise ValueError(
+                    "Container not initialized. Call init() first.")
 
-    @classmethod
-    def reset(cls) -> None:
-        cls._loan_repo = None
-        cls._payment_repo = None
-        cls._loan_service = None
+            cls._loan_service = LoanService(
+                loan_data=cls._loan_datastore,
+                loan_payment_data=cls._payment_datastore,
+            )
+
+        return cls._loan_service
 
     @classmethod
     def override(
         cls,
-        loan_repo: Optional[Repository[Loan]] = None,
-        payment_repo: Optional[Repository[LoanPayment]] = None,
+        loan_datastore: Optional[DataStore[Loan]] = None,
+        payment_datastore: Optional[DataStore[LoanPayment]] = None,
     ) -> None:
-        if loan_repo is not None:
-            cls._loan_repo = loan_repo
-        if payment_repo is not None:
-            cls._payment_repo = payment_repo
+        cls.reset()
+        if loan_datastore is not None:
+            cls._loan_datastore = loan_datastore
+        if payment_datastore is not None:
+            cls._payment_datastore = payment_datastore
         cls._loan_service = None

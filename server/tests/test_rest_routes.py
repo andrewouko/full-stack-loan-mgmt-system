@@ -2,7 +2,7 @@ from typing import Union, cast
 from flask.testing import FlaskClient
 
 from models import Loan
-from repositories import InMemoryRepository
+from datastore import InMemoryDataStore
 from tests.factories import LoanFactory
 
 
@@ -12,10 +12,10 @@ class TestRestRoutes:
         assert response.status_code == 200
         assert response.data.decode() == "Welcome to the Loan Application API"
 
-    def test_add_loan_payment_route_success(self, client: FlaskClient, loan_repo: InMemoryRepository[Loan]):
+    def test_add_loan_payment_route_success(self, client: FlaskClient, loan_datastore: InMemoryDataStore[Loan]):
         # loan for testing
         loan = cast(Loan, LoanFactory())
-        loan_repo.add(loan)
+        loan_datastore.add(loan)
 
         payload: dict[str, Union[float, int]] = {
             "loan_id": loan.id,
@@ -57,10 +57,10 @@ class TestRestRoutes:
         assert "error" in data
         assert data["error"] == "Loan with id 9999 does not exist."
     
-    def test_add_loan_payment_excess_amount(self, client: FlaskClient, loan_repo: InMemoryRepository[Loan]):
+    def test_add_loan_payment_excess_amount(self, client: FlaskClient, loan_datastore: InMemoryDataStore[Loan]):
         # loan for testing
         loan = cast(Loan, LoanFactory(principal=500.0, interest_rate=10))
-        loan_repo.add(loan)
+        loan_datastore.add(loan)
 
         payload: dict[str, Union[int, float]] = {
             "loan_id": loan.id,

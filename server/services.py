@@ -2,13 +2,13 @@ from datetime import date
 from itertools import count
 from typing import Any, List, Optional
 from models import Loan, LoanFilter, LoanPayment, LoanPaymentInput
-from repositories import Repository
+from datastore import DataStore
 
 
 class LoanService:
     _id_counter = count(4)
 
-    def __init__(self, loan_data: Repository[Loan], loan_payment_data: Repository[LoanPayment]) -> None:
+    def __init__(self, loan_data: DataStore[Loan], loan_payment_data: DataStore[LoanPayment]) -> None:
         self._loan_data = loan_data
         self._loan_payment_data = loan_payment_data
 
@@ -23,8 +23,8 @@ class LoanService:
                 return True
             if filter.name is not None and loan.name != filter.name:
                 return False
-            if filter.interest_rate is not None and loan.interest_rate != filter.interest_rate:
-                return False
+            if filter.interest_rate is not None:
+                return loan.interest_rate <= filter.interest_rate
             if filter.principal is not None and loan.principal != filter.principal:
                 return False
             if filter.due_date is not None and loan.due_date != filter.due_date:

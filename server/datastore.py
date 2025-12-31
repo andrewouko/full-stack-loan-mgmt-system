@@ -9,7 +9,10 @@ class Identifiable(Protocol):
 T = TypeVar('T', bound=Identifiable)
 
 
-class Repository(Generic[T]):
+DEFAULT_LIMIT = 10
+
+
+class DataStore(Generic[T]):
     @abstractmethod
     def add(self, item: T) -> T:
         pass
@@ -35,7 +38,7 @@ class Repository(Generic[T]):
 
 
 # Uses the in-memory seed data for storage
-class InMemoryRepository(Repository[T]):
+class InMemoryDataStore(DataStore[T]):
     def __init__(self, initial_items: list[T]) -> None:
         self._items = initial_items
 
@@ -58,7 +61,7 @@ class InMemoryRepository(Repository[T]):
                     start_index = index + 1
                     break
 
-        return filtered_items[start_index:start_index + (limit if limit is not None else 10)]
+        return filtered_items[start_index:start_index + (limit if limit is not None else DEFAULT_LIMIT)]
 
     def get_by_id(self, item_id: int) -> Optional[T]:
         for item in self._items:

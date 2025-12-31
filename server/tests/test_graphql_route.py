@@ -2,11 +2,11 @@ from typing import Any, cast
 from flask.testing import FlaskClient
 
 from models import Loan
-from repositories import InMemoryRepository
+from datastore import InMemoryDataStore
 
 
 class TestGraphQLRoute:
-    def test_get_existing_loans(self, client: FlaskClient, loan_repo: InMemoryRepository[Loan]):
+    def test_get_existing_loans(self, client: FlaskClient, loan_datastore: InMemoryDataStore[Loan]):
         query = """
         query {
             loans {
@@ -27,11 +27,11 @@ class TestGraphQLRoute:
         loans = data["data"]["loans"]
         assert isinstance(loans, list)
         assert len(cast(list[Loan], loans)) == len(
-            loan_repo.get_all(limit=None, cursor=None))
+            loan_datastore.get_all(limit=None, cursor=None))
 
-    def test_get_loan_by_id(self, client: FlaskClient, loan_repo: InMemoryRepository[Loan]):
+    def test_get_loan_by_id(self, client: FlaskClient, loan_datastore: InMemoryDataStore[Loan]):
         # Pick a loan from the repo
-        existing_loan = loan_repo.get_all(limit=1, cursor=None)[0]
+        existing_loan = loan_datastore.get_all(limit=1, cursor=None)[0]
         query = f"""
         query {{
             loan(loanId: {existing_loan.id}) {{
@@ -57,9 +57,9 @@ class TestGraphQLRoute:
         assert loan["interestRate"] == existing_loan.interest_rate
         assert loan["dueDate"] == existing_loan.due_date.isoformat()
 
-    def test_get_loan_payments(self, client: FlaskClient, loan_repo: InMemoryRepository[Loan]):
+    def test_get_loan_payments(self, client: FlaskClient, loan_datastore: InMemoryDataStore[Loan]):
         # Pick a loan from the repo with payments
-        existing_loan = loan_repo.get_all(limit=None, cursor=None)[1]
+        existing_loan = loan_datastore.get_all(limit=None, cursor=None)[1]
         query = f"""
         query {{
             loanPayments(loanId: {existing_loan.id}) {{
