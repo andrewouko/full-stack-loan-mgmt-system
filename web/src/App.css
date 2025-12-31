@@ -108,23 +108,33 @@
   margin: 1rem 0;
 }
 
-.on-time-status {
-  color: green;
-  font-weight: bold;
+.status-with-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.late-status {
-  color: orange;
-  font-weight: bold;
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
 }
 
-.defaulted-status {
-  color: red;
-  font-weight: bold;
+.status-dot.on-time {
+  background-color: green;
 }
 
-.unpaid-status {
-  color: rgb(166, 0, 255);
+.status-dot.late {
+  background-color: orange;
+}
+
+.status-dot.defaulted {
+  background-color: red;
+}
+
+.status-dot.unpaid {
+  background-color: gray;
 }
 
 .alert-success {

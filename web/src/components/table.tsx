@@ -1,3 +1,5 @@
+import { isValidElement, ReactNode } from "react";
+
 interface Identifiable {
   id: number;
 }
@@ -16,12 +18,11 @@ interface PaginationProps {
 interface Props<T extends Identifiable> {
   title: string;
   columnNames: string[];
-  data: (T & { className?: string })[];
+  data: T[];
   loading: boolean;
   hasError: boolean;
   pagination?: PaginationProps;
   onRowClick?: (item: T) => void;
-  actions?: React.ReactNode[];
 }
 
 export function Table<T extends Identifiable>({
@@ -32,7 +33,6 @@ export function Table<T extends Identifiable>({
   hasError,
   pagination,
   onRowClick,
-  actions,
 }: Readonly<Props<T>>) {
   const {
     setLimit,
@@ -42,6 +42,24 @@ export function Table<T extends Identifiable>({
     cursor,
     pageSizeOptions,
   } = pagination || {};
+
+  const renderCellValue = (value: unknown): ReactNode => {
+    if (isValidElement(value)) {
+      return value;
+    }
+    if (value === null || value === undefined) {
+      return "";
+    }
+    if (
+      typeof value === "string" ||
+      typeof value === "number" ||
+      typeof value === "boolean"
+    ) {
+      return String(value);
+    }
+    return "";
+  };
+
   return (
     <div>
       {pagination && setLimit && pageSizeOptions && (
@@ -76,23 +94,15 @@ export function Table<T extends Identifiable>({
                 <tr
                   key={`item-${index}-${title}`}
                   onClick={() => onRowClick?.(item)}
-                  className={item.className}
                 >
-                  {Object.values(item)
-                    .filter((value) => value !== item.className)
-                    .map((value, idx) => (
-                      <td key={`item-${index}-${title}-value-${idx}`}>
-                        {String(value)}
-                      </td>
-                    ))}
+                  {Object.values(item).map((value, idx) => (
+                    <td key={`item-${index}-${title}-value-${idx}`}>
+                      {renderCellValue(value)}
+                    </td>
+                  ))}
                 </tr>
               );
             })}
-            {actions && (
-              <tr>
-                <td colSpan={columnNames.length}>{actions}</td>
-              </tr>
-            )}
           </tbody>
         </table>
       ) : (
@@ -109,7 +119,9 @@ export function Table<T extends Identifiable>({
           <button
             disabled={pagination.nextCursor === null || loading || hasError}
             onClick={() => {
-              goToNextPage(data.length > 0 ? data[data.length - 1]?.id ?? null : null);
+              goToNextPage(
+                data.length > 0 ? data[data.length - 1]?.id ?? null : null
+              );
             }}
           >
             Next

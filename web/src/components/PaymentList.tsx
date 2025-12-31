@@ -1,13 +1,18 @@
 import { useQuery } from "@apollo/client";
-import { LoanPaymentsDocument, LoanPaymentsQuery, LoanPaymentsQueryVariables, PaymentStatus } from "../__generated__/graphql";
+import {
+  LoanPaymentsDocument,
+  LoanPaymentsQuery,
+  LoanPaymentsQueryVariables,
+  PaymentStatus,
+} from "../__generated__/graphql";
 import { Loan } from "../types";
 import { Table } from "./table";
 
 const paymentStatusClass: Record<PaymentStatus, string> = {
-  ON_TIME: "on-time-status",
-  LATE: "late-status",
-  DEFAULTED: "defaulted-status",
-  UNPAID: "unpaid-status",
+  ON_TIME: "on-time",
+  LATE: "late",
+  DEFAULTED: "defaulted",
+  UNPAID: "unpaid",
 };
 
 const paymentStatusText: Record<PaymentStatus, string> = {
@@ -15,6 +20,15 @@ const paymentStatusText: Record<PaymentStatus, string> = {
   LATE: "Late",
   DEFAULTED: "Defaulted",
   UNPAID: "Unpaid",
+};
+
+const StatusBadge: React.FC<{ status: PaymentStatus }> = ({ status }) => {
+  return (
+    <div className="status-with-dot">
+      <span className={`status-dot ${paymentStatusClass[status]}`}></span>
+      {paymentStatusText[status]}
+    </div>
+  );
 };
 
 export const PaymentList: React.FC<{ loan: Loan }> = ({ loan }) => {
@@ -67,8 +81,7 @@ export const PaymentList: React.FC<{ loan: Loan }> = ({ loan }) => {
           }),
           dueDate: payment.dueDate,
           paymentDate: payment.paymentDate ? payment.paymentDate : "N/A",
-          status: paymentStatusText[payment.status],
-          className: paymentStatusClass[payment.status],
+          status: <StatusBadge status={payment.status} />,
         }))}
         loading={false}
         hasError={false}

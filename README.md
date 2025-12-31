@@ -87,7 +87,7 @@ App available at: http://localhost:5173
 | **On Time** | Paid within 5 days of due date | 🟢 Green |
 | **Late** | Paid 6-30 days after due date | 🟠 Orange |
 | **Defaulted** | Paid 30+ days after due date | 🔴 Red |
-| **Unpaid** | No payment date | 🟣 Purple |
+| **Unpaid** | No payment date | ⚪ Gray |
 
 ## Documentation
 

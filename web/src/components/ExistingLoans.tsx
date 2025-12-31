@@ -14,7 +14,7 @@ import { PaymentList } from "./PaymentList";
 const PAGE_SIZE_OPTIONS = [1, 5, 10];
 
 export const ExistingLoans: React.FC = () => {
-  const [limit, setLimit] = useState<number>(PAGE_SIZE_OPTIONS[0]);
+  const [limit, setLimit] = useState<number>(PAGE_SIZE_OPTIONS[1]);
   const { goToNextPage, goToPreviousPage, cursor, resetPagination } = usePagination();
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
 
