@@ -6,7 +6,7 @@ A React + TypeScript frontend for managing loans with GraphQL integration, built
 
 | Technology | Purpose |
 |------------|---------|
-| **React 18** | UI framework |
+| **React 19** | UI framework |
 | **TypeScript** | Type-safe JavaScript |
 | **Vite** | Build tool with HMR |
 | **Apollo Client** | GraphQL client for data fetching and caching |
@@ -41,7 +41,7 @@ web/
 │   ├── index.css             # Global styles
 │   ├── main.tsx              # Application entry point
 │   ├── types.ts              # Shared TypeScript types
-│   └── vite-env.d.ts         # Vite environment type declarations
+│   └── vite-env.d.ts
 ├── codegen.ts                # GraphQL Codegen configuration
 ├── package.json
 ├── tsconfig.json
