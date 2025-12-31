@@ -3,3 +3,4 @@ __pycache__/
 .devcontainer/
 .pytest_cache/
 .coverage
+.env

@@ -18,9 +18,15 @@ export const usePagination = () => {
     setCursor(previousCursor);
   };
 
+  const resetPagination = () => {
+    setCursor(null);
+    setCursorHistory([]);
+  };
+
   return {
     goToNextPage,
     goToPreviousPage,
     cursor,
+    resetPagination,
   };
 };

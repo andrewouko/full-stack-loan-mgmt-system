@@ -1,6 +1,8 @@
 from abc import abstractmethod
 from typing import Callable, Generic, Optional, TypeVar, Protocol
 
+from models import PaginationResult
+
 
 class Identifiable(Protocol):
     id: int
@@ -18,7 +20,7 @@ class DataStore(Generic[T]):
         pass
 
     @abstractmethod
-    def get_all(self, cursor: Optional[int], limit: Optional[int], filter_fn: Optional[Callable[[T], bool]] = None) -> list[T]:
+    def get_all(self, cursor: Optional[int], limit: Optional[int], filter_fn: Optional[Callable[[T], bool]] = None) -> tuple[list[T], PaginationResult]:
         """
             Retrieve all items with optional pagination and filtering.
 
@@ -28,7 +30,7 @@ class DataStore(Generic[T]):
             filter_fn (Optional[Callable[[T], bool]], optional): A function to filter items. E.g. lambda x: x.name == "example". Defaults to None.
 
         Returns:
-            list[T]: A list of items of type T.
+            tuple[list[T], PaginationResult]: A tuple containing the list of items and pagination metadata.
         """
         pass
 
@@ -49,7 +51,7 @@ class InMemoryDataStore(DataStore[T]):
         self._items.append(item)
         return item
 
-    def get_all(self, cursor: Optional[int], limit: Optional[int], filter_fn: Optional[Callable[[T], bool]] = None) -> list[T]:
+    def get_all(self, cursor: Optional[int], limit: Optional[int], filter_fn: Optional[Callable[[T], bool]] = None) -> tuple[list[T], PaginationResult]:
         filtered_items = self._items
         if filter_fn is not None:
             filtered_items = list(filter(filter_fn, self._items))
@@ -61,7 +63,16 @@ class InMemoryDataStore(DataStore[T]):
                     start_index = index + 1
                     break
 
-        return filtered_items[start_index:start_index + (limit if limit is not None else DEFAULT_LIMIT)]
+        result_limit = limit if limit is not None else DEFAULT_LIMIT
+        result_items = filtered_items[start_index:start_index + result_limit]
+        total_items = len(filtered_items)
+        
+        # Check if there are more items after the current page
+        has_more = start_index + result_limit < total_items
+        next_cursor = result_items[-1].id if has_more and len(result_items) > 0 else None
+
+        pagination_result = PaginationResult(total_items=total_items, next_cursor=next_cursor)
+        return result_items, pagination_result
 
     def get_by_id(self, item_id: int) -> Optional[T]:
         for item in self._items:

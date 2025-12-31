@@ -9,6 +9,8 @@ interface PaginationProps {
   goToPreviousPage: () => void;
   cursor: number | null;
   pageSizeOptions: number[];
+  totalItems: number;
+  nextCursor: number | null;
 }
 
 interface Props<T extends Identifiable> {
@@ -105,9 +107,9 @@ export function Table<T extends Identifiable>({
             Previous
           </button>
           <button
-            disabled={data.length < limit || loading || hasError}
+            disabled={pagination.nextCursor === null || loading || hasError}
             onClick={() => {
-              goToNextPage(data.at(-1)?.id ?? null);
+              goToNextPage(data.length > 0 ? data[data.length - 1]?.id ?? null : null);
             }}
           >
             Next

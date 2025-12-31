@@ -1,7 +1,7 @@
 from datetime import date
 from itertools import count
 from typing import Any, List, Optional
-from models import Loan, LoanFilter, LoanPayment, LoanPaymentInput, LoanPaymentResponse, PaymentStatus
+from models import Loan, LoanFilter, LoanPayment, LoanPaymentInput, LoanPaymentResponse, PaginationResult, PaymentStatus
 from datastore import DataStore
 
 
@@ -17,17 +17,17 @@ class LoanService:
         cursor: Optional[int],
         limit: Optional[int],
         filter: Optional[LoanFilter],
-    ) -> List[Loan]:
+    ) -> tuple[List[Loan], PaginationResult]:
         def filter_fn(loan: Loan) -> bool:
             if filter is None:
                 return True
-            if filter.name is not None and loan.name != filter.name:
+            if filter.name is not None and filter.name.lower() not in loan.name.lower():
                 return False
-            if filter.interest_rate is not None:
-                return loan.interest_rate <= filter.interest_rate
-            if filter.principal is not None and loan.principal != filter.principal:
+            if filter.interest_rate is not None and loan.interest_rate > filter.interest_rate:
                 return False
-            if filter.due_date is not None and loan.due_date <= filter.due_date:
+            if filter.principal is not None and loan.principal > filter.principal:
+                return False
+            if filter.due_date is not None and loan.due_date > filter.due_date:
                 return False
             return True
 
@@ -36,17 +36,17 @@ class LoanService:
     def get_loan_by_id(self, loan_id: int) -> Optional[Loan]:
         return self._loan_data.get_by_id(loan_id)
 
-    def get_loan_payments(self, loan_id: int, cursor: Optional[int] = None, limit: Optional[int] = None) -> List[LoanPaymentResponse]:
+    def get_loan_payments(self, loan_id: int, cursor: Optional[int] = None, limit: Optional[int] = None) -> tuple[List[LoanPaymentResponse], PaginationResult]:
         loan = self.get_loan_by_id(loan_id)
         if loan is None:
-            return []
+            return [], PaginationResult(total_items=0)
 
         def filter_fn(payment: LoanPayment) -> bool:
             return payment.loan_id == loan_id
 
-        payments = self._loan_payment_data.get_all(
+        payments, pagination_result = self._loan_payment_data.get_all(
             cursor=cursor, limit=limit, filter_fn=filter_fn)
-        
+
         if len(payments) == 0:
             return [
                 LoanPaymentResponse(
@@ -59,7 +59,7 @@ class LoanService:
                     status=PaymentStatus.UNPAID,
                     amount=0.0
                 )
-            ]
+            ], pagination_result
 
         return [
             LoanPaymentResponse(
@@ -74,7 +74,7 @@ class LoanService:
                 amount=payment.amount
             )
             for payment in payments
-        ]
+        ], pagination_result
 
     def _get_loan_payment_status(self, loan_due_date: date, payment_date: Optional[date]) -> PaymentStatus:
         if payment_date is None:
@@ -104,7 +104,7 @@ class LoanService:
         loan = self.get_loan_by_id(input.loan_id)
         if loan is None:
             raise ValueError(f"Loan with id {input.loan_id} does not exist.")
-        
+
         loan_payment = LoanPayment(
             id=next(self._id_counter),
             loan_id=input.loan_id,

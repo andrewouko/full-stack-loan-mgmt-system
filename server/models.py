@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import enum
-from typing import Literal, Optional
+from typing import Generic, Literal, Optional, TypeVar, List
 import strawberry
 import datetime
 
@@ -73,3 +73,18 @@ class LoanPaymentResponse:
     status: PaymentStatus
     amount: float
     payment_date: Optional[datetime.date] = None
+
+@strawberry.type
+@dataclass
+class PaginationResult:
+    total_items: int
+    next_cursor: Optional[int] = None
+
+# Generic type variable for paginated results
+T = TypeVar("T")
+@strawberry.type
+@dataclass
+class PaginatedResult(Generic[T]):
+    """Generic paginated result wrapper for any list type."""
+    items: List[T]
+    pagination_params: PaginationResult

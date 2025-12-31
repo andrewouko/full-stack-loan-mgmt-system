@@ -26,7 +26,7 @@ def loan_datastore() -> InMemoryDataStore[Loan]:
 @pytest.fixture
 def payment_datastore(loan_datastore: InMemoryDataStore[Loan]) -> InMemoryDataStore[LoanPayment]:
     payments: list[LoanPayment] = []
-    all_loans = loan_datastore.get_all(limit=None, cursor=None)
+    all_loans, _ = loan_datastore.get_all(limit=None, cursor=None)
     for i, loan in enumerate(all_loans):
         # Skip creating payments for the first loan to test no-payment scenario
         if i == 0:
@@ -75,9 +75,9 @@ def loan_service() -> LoanService:
 
 @pytest.fixture
 def loan_with_no_payments(loan_datastore: InMemoryDataStore[Loan], loan_service: LoanService) -> Loan:
-    all_loans = loan_datastore.get_all(cursor=None, limit=None)
+    all_loans, _ = loan_datastore.get_all(cursor=None, limit=None)
     target_loan = all_loans[0]
-    unpaid_payments = loan_service.get_loan_payments(
+    unpaid_payments, _ = loan_service.get_loan_payments(
         loan_id=target_loan.id, cursor=None, limit=None)
     assert len(unpaid_payments) == 1
     assert unpaid_payments[0].status == PaymentStatus.UNPAID

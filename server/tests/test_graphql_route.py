@@ -10,11 +10,17 @@ class TestGraphQLRoute:
         query = """
         query {
             loans {
-                id
-                name
-                principal
-                interestRate
-                dueDate
+                items {
+                    id
+                    name
+                    interestRate
+                    principal
+                    dueDate
+                }
+                paginationParams {
+                    totalItems
+                    nextCursor
+                }
             }
         }
         """
@@ -22,16 +28,45 @@ class TestGraphQLRoute:
         assert response.status_code == 200
         data = response.get_json()
         assert data is not None
-        assert "data" in data
-        assert "loans" in data["data"]
-        loans = data["data"]["loans"]
+        loans = data["data"]["loans"]["items"]
         assert isinstance(loans, list)
-        assert len(cast(list[Loan], loans)) == len(
-            loan_datastore.get_all(limit=None, cursor=None))
+        all_loans, _ = loan_datastore.get_all(limit=None, cursor=None)
+        assert len(cast(list[Loan], loans)) == len(all_loans)
+
+    def test_get_existing_loans_with_pagination(self, client: FlaskClient, loan_datastore: InMemoryDataStore[Loan]):
+        query = """
+        query {
+            loans(cursor: 3, limit: 1) {
+                items {
+                    id
+                    name
+                    interestRate
+                    principal
+                    dueDate
+                }
+                paginationParams {
+                    totalItems
+                    nextCursor
+                }
+            }
+        }
+        """
+        response = client.post("/graphql", json={"query": query})
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data is not None
+        loans = data["data"]["loans"]["items"]
+        pagination = data["data"]["loans"]["paginationParams"]
+        # Should return 1 loan (limit=1)
+        assert len(loans) == 1
+        # totalItems should still reflect all loans
+        all_loans, _ = loan_datastore.get_all(limit=None, cursor=None)
+        assert pagination["totalItems"] == len(all_loans)
 
     def test_get_loan_by_id(self, client: FlaskClient, loan_datastore: InMemoryDataStore[Loan]):
         # Pick a loan from the repo
-        existing_loan = loan_datastore.get_all(limit=1, cursor=None)[0]
+        all_loans, _ = loan_datastore.get_all(limit=1, cursor=None)
+        existing_loan = all_loans[0]
         query = f"""
         query {{
             loan(loanId: {existing_loan.id}) {{
@@ -59,17 +94,25 @@ class TestGraphQLRoute:
 
     def test_get_loan_payments(self, client: FlaskClient, loan_datastore: InMemoryDataStore[Loan]):
         # Pick a loan from the repo with payments
-        existing_loan = loan_datastore.get_all(limit=None, cursor=None)[1]
+        loans, _ = loan_datastore.get_all(limit=None, cursor=None)
+        existing_loan = loans[1]
+
         query = f"""
         query {{
             loanPayments(loanId: {existing_loan.id}) {{
-                id
-                name
-                interestRate
-                principal
-                dueDate
-                paymentDate
-                status
+                items {{
+                    id
+                    name
+                    interestRate
+                    principal
+                    dueDate
+                    paymentDate
+                    status
+                }}
+                paginationParams {{
+                    totalItems
+                    nextCursor
+                }}
             }}
         }}
         """
@@ -79,7 +122,10 @@ class TestGraphQLRoute:
         assert data is not None
         assert "data" in data
         assert "loanPayments" in data["data"]
-        payments = cast(list[dict[str, Any]], data["data"]["loanPayments"])
+        assert "items" in data["data"]["loanPayments"]
+        assert "paginationParams" in data["data"]["loanPayments"]
+        payments = cast(list[dict[str, Any]], data["data"]
+                        ["loanPayments"]["items"])
         assert isinstance(payments, list)
         assert len(payments) >= 1
         assert all(payment["name"] ==

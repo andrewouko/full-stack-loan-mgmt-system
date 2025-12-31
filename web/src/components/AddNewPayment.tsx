@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { LoanPayment } from "../types";
 import { Spinner } from "./spinner";
+import { PAYMENT_URL } from "../config";
 
 type ResponseData =
   | {
@@ -38,7 +39,7 @@ export const AddNewPayment = () => {
 
   const handleSubmit = async () => {
     setIsLoading(true);
-    const res = await fetch("http://localhost:2024/payment", {
+    const res = await fetch(PAYMENT_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
