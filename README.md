@@ -123,6 +123,5 @@ npm run compile
 - [ ] JWT authentication
 - [ ] Unit tests for frontend (Vitest + RTL)
 - [ ] E2E tests (Cypress)
-- [ ] CI/CD pipeline
 
 ---
